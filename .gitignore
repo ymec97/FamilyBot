@@ -1,0 +1,5 @@
+# Don't add private keys
+APIs/*
+
+# cache
+__pycache__/
