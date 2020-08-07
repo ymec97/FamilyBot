@@ -10,7 +10,7 @@ from telegram.ext import MessageHandler, Filters, CommandHandler
 import pdb
 
 
-problems = []
+problems = ["שטויות", "בלאגן"]
 
 def getToken():
 	""" Read bot token from file """
@@ -21,27 +21,31 @@ def start(update, context):
 
 def status(update, context):
 	""" Handle /status command in the bot """
-	context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
-
+	context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(problems))
 
 def unknown(update, context):
-    #context.bot.send_message(chat_id=update.effective_chat.id, text="Sorry, I didn't understand that command.")
     context.bot.send_message(chat_id=update.effective_chat.id, text="נו חלאס.")
 
 def main():
 	logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
 	token=getToken()
-
+	
 	updater = Updater(token=getToken(), use_context=True)
 	dispatcher = updater.dispatcher
+	
+	# Handlers
 	start_handler = CommandHandler('start', start)
-	dispatcher.add_handler(start_handler)
-
+	status_handler = CommandHandler('status', status)
 	unknown_handler = MessageHandler(Filters.command, unknown)
+
+
+	dispatcher.add_handler(start_handler)
+	dispatcher.add_handler(status_handler)
 	dispatcher.add_handler(unknown_handler)
+	
 	updater.start_polling()
-	return
+	
 
 if __name__ == '__main__':
     main()    
