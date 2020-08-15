@@ -45,17 +45,17 @@ class Problems():
             if not self.problems[id]:
                 return id
 
-    def newProblem(self, description):
+    def new_problem(self, description):
         newId = self._getFreeId()
         self.problems[newId] = Problem(newId, description)
         return newId
 
-    def fixProblem(self, id):
+    def fix_problem(self, id):
         self.problems[id].fix()
         self.fixed_issues[id] = self.problems[id]
         self.problems[id] = None
 
-    def delProblem(self, id):
+    def del_problem(self, id):
         if self.problems[id] == None:
             return False
 
@@ -64,10 +64,9 @@ class Problems():
 
 probs = Problems()
 
-def getToken():
+def get_token():
     """ Read bot token from file """
     return open("APIs/Telegram/CohenFamilyBot/token.txt").read()
-
 
 # Command logics
 def start(update, context):
@@ -89,7 +88,7 @@ def status(update, context):
 def report(update, context):
     """ Handle /report command in the bot """
     #context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(problems))
-    problemId = probs.newProblem(''.join(context.args))
+    problemId = probs.new_problem(''.join(context.args))
     context.bot.send_message(chat_id=update.effective_chat.id, text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId))
 
 def unknown(update, context):
