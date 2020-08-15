@@ -9,6 +9,13 @@ from datetime import date
 # For debug purposes
 import pdb
 
+"""
+Commands list (in botfather format):
+
+start - start a new conversation with the bot
+problems - view open problems reported in the past
+report - open a new problem to be fixed
+"""
 
 MAX_SUPPORTED_OPEN_PROBLEMS = 100
 MAX_SUPPORTED_FIXED_ISSUES = 100
@@ -17,18 +24,36 @@ DATE_FORMAT = "%d/%m/%Y"
 class Problem():
     def __init__(self, id, description):
         self.id = id
-        self.is_active = True
+        self.isActive = True
         self.description = description
-        self.date_opened = date.today().strftime(DATE_FORMAT)
-        self.date_closed = None # None until closed
-        self.date_fixed = None # None until fixed
-
-    def _today(self):
-        return date.today().strftime(DATE_FORMAT)
+        self.dateOpened = date.today()
+        self.dateClosed = None # None until closed
+        self.dateFixed = None # None until fixed
 
     def fix(self):
-        self.date_fixed = self._today
-        self.is_active = False
+        self.dateFixed = date.today()
+        self.isActive = False
+
+    def days_open(self):
+        """ return int indicating how many days the issue is open """
+        latestActiveDate = date.today() # Meaning still unresolved
+        if self.dateClosed:
+            latestActiveDate = self.dateClosed
+        elif self.dateFixed:
+            latestActiveDate = self.dateFixed
+
+        return (latestActiveDate - self.dateOpened).days
+
+    def get_date_opened(self):
+        """ Return a string representing the date the problem was opened in"""
+        return self.dateOpened.strftime(DATE_FORMAT)
+    def get_date_fixed(self):
+        """ Return a string representing the date the problem was fixed in"""
+        return self.dateFixed.strftime(DATE_FORMAT)
+    
+    def get_date_closed(self):
+        """ Return a string representing the date the problem was closed in"""
+        return self.dateClosed.strftime(DATE_FORMAT)
 
 class Problems():
     problems = {}
@@ -86,7 +111,7 @@ def start(update, context):
 
 def problems(update, context):
     """ Handle /problems command in the bot """
-    text = "ID  Description"
+    text = ""
     problems = probs.get_open_problems()
 
     if len(problems) == 0:
@@ -95,18 +120,41 @@ def problems(update, context):
         return True
     
     for problem in problems:
-            text = "{0}\n{1}:  {2}".format(text, problem.id, problem.description)
-            
+        openDuration = problem.days_open()
+        if openDuration > 0:
+            text = "{0}\nID {1}: {2} [{3}d open".format(text, problem.id, problem.description, openDuration)
+        else:
+            text = "{0}\nID {1}: {2} [opened today]".format(text, problem.id, problem.description, openDuration)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def report(update, context):
-    """ Handle /report command in the bot """
-    #context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(problems))
-    problemId = probs.new_problem(''.join(context.args))
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId))
+    """ 
+    Handle /report command in the bot 
+
+    syntax: /report [description]
+    """
+    syntaxMessage = "usage: /report [description]"
+    text = "Nothing to report. Please describe the problem\n" + syntaxMessage
+    if len(context.args) != 0:
+        # Problem description passed with the command
+        problemId = probs.new_problem(''.join(context.args))
+        text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId)
+
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def unknown(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="נו חלאס.")
+    responses = ["הפקודה לא נתמכת.", "די.", "נו חלאס!"]
+    if not hasattr(unknown, "counter"):
+        unknown.counter = 0
+    
+    # Calculate response using counter, make sure counter never gets out of scope
+    response = responses[unknown.counter % len(responses)]
+    unknown.counter = (unknown.counter + 1) % len(responses)
+    print(unknown.counter)
+    
+
+    context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+
 
 
 def main():
