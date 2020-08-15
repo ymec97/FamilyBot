@@ -62,6 +62,18 @@ class Problems():
         self.problems[id] = None
         return True
 
+
+    def get_open_problems(self):
+        """ Return a list of unresolved Problem instances. """
+        openProblems = []
+        
+        for problem in self.problems.values():
+            if problem:
+                openProblems.append(problem)
+        
+        return openProblems
+        
+
 probs = Problems()
 
 def get_token():
