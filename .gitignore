@@ -3,3 +3,12 @@ APIs/*
 
 # cache
 __pycache__/
+
+# Env files
+*.pyc
+
+# Development stage
+conversationbot
+familybot.data
+convbot.py
+*.swp

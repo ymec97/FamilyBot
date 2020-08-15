@@ -84,17 +84,19 @@ def get_token():
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-def status(update, context):
-    """ Handle /status command in the bot """
+def problems(update, context):
+    """ Handle /problems command in the bot """
     text = "ID  Description"
-    isEmpty = True
-    for problems in probs.problems.values():
-        if problems:
-            isEmpty = False
-            text = "{0}\n{1}:  {2}".format(text, problems.id, problems.description)
+    problems = probs.get_open_problems()
+
+    if len(problems) == 0:
+        # no unresolved problems
+        context.bot.send_message(chat_id=update.effective_chat.id, text="No problems.")
+        return True
+    
+    for problem in problems:
+            text = "{0}\n{1}:  {2}".format(text, problem.id, problem.description)
             
-    if isEmpty:
-        text = "No problems"
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def report(update, context):
@@ -110,20 +112,20 @@ def unknown(update, context):
 def main():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
-    token=getToken()
+    token=get_token()
     
-    updater = Updater(token=getToken(), use_context=True)
+    updater = Updater(token=get_token(), use_context=True)
     dispatcher = updater.dispatcher
     
     # Handlers
     start_handler = CommandHandler('start', start)
-    status_handler = CommandHandler('status', status)
+    problems_handler = CommandHandler('problems', problems)
     report_handler = CommandHandler('report', report)
     unknown_handler = MessageHandler(Filters.command, unknown)
 
 
     dispatcher.add_handler(start_handler)
-    dispatcher.add_handler(status_handler)
+    dispatcher.add_handler(problems_handler)
     dispatcher.add_handler(report_handler)
     dispatcher.add_handler(unknown_handler)
     
