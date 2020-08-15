@@ -47,7 +47,8 @@ class Problems():
 
     def newProblem(self, description):
         newId = self._getFreeId()
-        self.problems[newId] = Problem(id, description)
+        self.problems[newId] = Problem(newId, description)
+        return newId
 
     def fixProblem(self, id):
         self.problems[id].fix()
@@ -74,12 +75,22 @@ def start(update, context):
 
 def status(update, context):
     """ Handle /status command in the bot """
-    context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(problems))
+    text = "ID  Description"
+    isEmpty = True
+    for problems in probs.problems.values():
+        if problems:
+            isEmpty = False
+            text = "{0}\n{1}:  {2}".format(text, problems.id, problems.description)
+            
+    if isEmpty:
+        text = "No problems"
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def report(update, context):
     """ Handle /report command in the bot """
     #context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(problems))
-    probs.newProblem(''.join(context.args))
+    problemId = probs.newProblem(''.join(context.args))
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId))
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="נו חלאס.")
