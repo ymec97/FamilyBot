@@ -15,6 +15,7 @@ Commands list (in botfather format):
 start - start a new conversation with the bot
 problems - view open problems reported in the past
 report - open a new problem to be fixed
+solve - Mark a problem as solved
 """
 
 MAX_SUPPORTED_OPEN_PROBLEMS = 100
@@ -70,15 +71,35 @@ class Problems():
             if not self.problems[id]:
                 return id
 
+    def _getUsedIds(self):
+        usedIds = []
+        for id in self.problems.keys():
+            if self.problems[id]:
+                usedIds.append(id)
+
+        return usedIds
+
     def new_problem(self, description):
         newId = self._getFreeId()
         self.problems[newId] = Problem(newId, description)
         return newId
 
     def fix_problem(self, id):
+        """ 
+        Mark a problem as closed and free id 
+
+        :param id The id to mark as fixed
+        :type     int
+        :returns  False when id doesn't exist. True otherwise
+        """
+        if id not in self._getUsedIds():
+            return False
+
         self.problems[id].fix()
         self.fixed_issues[id] = self.problems[id]
         self.problems[id] = None
+
+        return True
 
     def del_problem(self, id):
         if self.problems[id] == None:
@@ -131,16 +152,54 @@ def report(update, context):
     """ 
     Handle /report command in the bot 
 
-    syntax: /report [description]
+    usage: /report [description]
     """
-    syntaxMessage = "usage: /report [description]"
-    text = "Nothing to report. Please describe the problem\n" + syntaxMessage
+    usageMessage = "usage: /report [description]"
+    text = "Nothing to report. Please describe the problem\n" + usageMessage
     if len(context.args) != 0:
         # Problem description passed with the command
         problemId = probs.new_problem(''.join(context.args))
         text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId)
 
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+def solve(update, context):
+    """ 
+    Handle /solve command in the bot 
+
+    usage: /solve [ID]
+
+    :returns False when invalid parameters are supplied. True if a problem was marked as fixed.
+    """
+    SOLVE_PARAM_COUNT = 1
+    usageMessage = "usage: /solve [ID]"
+
+    if len(context.args) != SOLVE_PARAM_COUNT:
+        if len(context.args) == 0:
+            text = "Nothing to solve. Please add the problem ID\n" + usageMessage
+        else:
+            text = "Too many parameters to command\n" + usageMessage
+        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+        return False
+    
+    problemId = context.args[0]
+    if not problemId.isnumeric():
+        text = "Invalid problem ID supplied.\n" + usageMessage
+        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+        return False
+    
+    problemId = int(problemId)
+    if probs.fix_problem(problemId):
+        text="Awesome\nproblem with ID {0} solved!".format(problemId)
+
+    else:
+        text="Sorry, problem with ID: {0} doesn't exist".format(problemId)
+
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+    return True
 
 def unknown(update, context):
     responses = ["הפקודה לא נתמכת.", "די.", "נו חלאס!"]
@@ -169,13 +228,16 @@ def main():
     start_handler = CommandHandler('start', start)
     problems_handler = CommandHandler('problems', problems)
     report_handler = CommandHandler('report', report)
+    solve_handler = CommandHandler('solve', solve)
     unknown_handler = MessageHandler(Filters.command, unknown)
-
+    
 
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(problems_handler)
     dispatcher.add_handler(report_handler)
+    dispatcher.add_handler(solve_handler)
     dispatcher.add_handler(unknown_handler)
+    
     
     updater.start_polling()
     updater.idle()
