@@ -208,11 +208,11 @@ def unknown(update, context):
     
     # Calculate response using counter, make sure counter never gets out of scope
     response = responses[unknown.counter % len(responses)]
-    unknown.counter = (unknown.counter + 1) % len(responses)
-    print(unknown.counter)
-    
+    unknown.counter = (unknown.counter + 1) % len(responses)    
 
     context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+
+    return True
 
 
 
@@ -236,6 +236,8 @@ def main():
     dispatcher.add_handler(problems_handler)
     dispatcher.add_handler(report_handler)
     dispatcher.add_handler(solve_handler)
+
+    # Unknown command handler must be added last - commands registerd after it won't be recognized as commands
     dispatcher.add_handler(unknown_handler)
     
     
