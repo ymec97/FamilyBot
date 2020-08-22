@@ -158,7 +158,7 @@ def report(update, context):
     text = "Nothing to report. Please describe the problem\n" + usageMessage
     if len(context.args) != 0:
         # Problem description passed with the command
-        problemId = probs.new_problem(''.join(context.args))
+        problemId = probs.new_problem(' '.join(context.args))
         text="Awesome, reported - {0}. Task ID is: {1}".format(probs.problems[problemId].description, problemId)
 
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
