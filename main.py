@@ -16,35 +16,38 @@ def get_token():
 def main():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
-    token=get_token()
+    token = get_token()
     
     updater = Updater(token=get_token(), use_context=True)
     dispatcher = updater.dispatcher
+
+    commandsExecutioner = Commands.CommandsLogic.Executioner()
     
     # Handlers
-    start_handler = CommandHandler('start', Commands.CommandsLogic.start)
-    problems_handler = CommandHandler('problems', Commands.CommandsLogic.problems)
-    report_handler = CommandHandler('report', Commands.CommandsLogic.report)
-    solve_handler = CommandHandler('solve', Commands.CommandsLogic.solve)
-    solved_handler = CommandHandler('solved', Commands.CommandsLogic.solved)
-    unknown_handler = MessageHandler(Filters.command, Commands.CommandsLogic.unknown)
+    startHandler = CommandHandler('start', commandsExecutioner.start)
+    problemsHandler = CommandHandler('problems', commandsExecutioner.problems)
+    reportHandler = CommandHandler('report', commandsExecutioner.report)
+    solveHandler = CommandHandler('solve', commandsExecutioner.solve)
+    solvedHandler = CommandHandler('solved', commandsExecutioner.solved)
+    unknownHandler = MessageHandler(Filters.command, commandsExecutioner.unknown)
     
 
-    dispatcher.add_handler(start_handler)
-    dispatcher.add_handler(problems_handler)
-    dispatcher.add_handler(report_handler)
-    dispatcher.add_handler(solve_handler)
-    dispatcher.add_handler(solved_handler)
+    dispatcher.add_handler(startHandler)
+    dispatcher.add_handler(problemsHandler)
+    dispatcher.add_handler(reportHandler)
+    dispatcher.add_handler(solveHandler)
+    dispatcher.add_handler(solvedHandler)
 
     # Unknown command handler must be added last - commands registerd after it won't be recognized as commands
-    dispatcher.add_handler(unknown_handler)
+    dispatcher.add_handler(unknownHandler)
     
     
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
-    main()    
+    main()  
+    sys.exit(0)  
 else:
     print("Not a library")
     sleep(1)

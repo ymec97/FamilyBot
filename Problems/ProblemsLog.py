@@ -2,6 +2,9 @@ from datetime import date
 import Shared.Standards
 
 class Problem():
+    """
+    Binding operations needed to manage a problem
+    """
     def __init__(self, id, description):
         self.id = id
         self.isActive = True
@@ -36,6 +39,9 @@ class Problem():
         return self.dateClosed.strftime(Shared.Standards.DATE_FORMAT)
 
 class Manager():
+    """
+    Managing open and solved problems
+    """
     MAX_SUPPORTED_OPEN_PROBLEMS = 100
     MAX_SUPPORTED_SOLVED_ISSUES = 100
 
