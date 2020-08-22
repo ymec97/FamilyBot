@@ -12,10 +12,11 @@ import pdb
 """
 Commands list (in botfather format):
 
-start - start a new conversation with the bot
-problems - view open problems reported in the past
-report - open a new problem to be fixed
-solve - Mark a problem as solved
+start    - Start a new conversation with the bot
+problems - View open problems reported in the past
+report   - Open a new problem to be solved
+solve    - Mark a problem as solved
+solved    - View solved problems
 """
 
 MAX_SUPPORTED_OPEN_PROBLEMS = 100
@@ -29,10 +30,10 @@ class Problem():
         self.description = description
         self.dateOpened = date.today()
         self.dateClosed = None # None until closed
-        self.dateFixed = None # None until fixed
+        self.dateSolved = None # None until solved
 
     def fix(self):
-        self.dateFixed = date.today()
+        self.dateSolved = date.today()
         self.isActive = False
 
     def days_open(self):
@@ -40,30 +41,34 @@ class Problem():
         latestActiveDate = date.today() # Meaning still unresolved
         if self.dateClosed:
             latestActiveDate = self.dateClosed
-        elif self.dateFixed:
-            latestActiveDate = self.dateFixed
+        elif self.dateSolved:
+            latestActiveDate = self.dateSolved
 
         return (latestActiveDate - self.dateOpened).days
 
     def get_date_opened(self):
         """ Return a string representing the date the problem was opened in"""
         return self.dateOpened.strftime(DATE_FORMAT)
-    def get_date_fixed(self):
-        """ Return a string representing the date the problem was fixed in"""
-        return self.dateFixed.strftime(DATE_FORMAT)
+    def get_date_solved(self):
+        """ Return a string representing the date the problem was solved in"""
+        return self.dateSolved.strftime(DATE_FORMAT)
     
     def get_date_closed(self):
         """ Return a string representing the date the problem was closed in"""
         return self.dateClosed.strftime(DATE_FORMAT)
 
 class Problems():
+    # a dictionary of ID: Problem
     problems = {}
-    fixed_issues = {}
+
+    # a dictionary of ID: [Problem0, Problem1..] - closed/solved problems free their ID and duplicates can occur for closed/solved
+    solvedProblems = {}
 
 
     def __init__(self):
         for id in range(MAX_SUPPORTED_OPEN_PROBLEMS):
             self.problems[id] = None
+            self.solvedProblems[id] = None
 
     def _getFreeId(self):
         # Supporting up to 100 problems
@@ -88,15 +93,19 @@ class Problems():
         """ 
         Mark a problem as closed and free id 
 
-        :param id The id to mark as fixed
+        :param id The id to mark as solved
         :type     int
         :returns  False when id doesn't exist. True otherwise
         """
         if id not in self._getUsedIds():
             return False
 
+        # First time an issue with this ID is solved
+        if not self.solvedProblems[id]:
+            self.solvedProblems[id] = []
+
         self.problems[id].fix()
-        self.fixed_issues[id] = self.problems[id]
+        self.solvedProblems[id].append(self.problems[id])
         self.problems[id] = None
 
         return True
@@ -119,6 +128,16 @@ class Problems():
         
         return openProblems
         
+    def get_fixed_problems(self):
+        """ Return a list of solved Problem instances. """
+        solvedProblems = []
+        
+        for problem in self.solvedProblems.values():
+            if problem:
+                # self.solvedProblems values has a list of problems as values
+                solvedProblems.extend(problem)
+
+        return solvedProblems
 
 probs = Problems()
 
@@ -169,7 +188,7 @@ def solve(update, context):
 
     usage: /solve [ID]
 
-    :returns False when invalid parameters are supplied. True if a problem was marked as fixed.
+    :returns False when invalid parameters are supplied. True if a problem was marked as solved.
     """
     SOLVE_PARAM_COUNT = 1
     usageMessage = "usage: /solve [ID]"
@@ -201,6 +220,44 @@ def solve(update, context):
 
     return True
 
+def solved(update, context):
+    """ 
+    Handle /solved command in the bot 
+
+    usage: /solved
+
+    :returns False when invalid parameters are supplied. True if a the solved problems list was printed successfuly
+    """
+    FIXED_PARAM_COUNT = 0
+    usageMessage = "usage: /solved"
+    solvedProblems = probs.get_fixed_problems()
+    # problems descriptions are appended here later
+    text = ""
+
+    if len(context.args) != FIXED_PARAM_COUNT:
+        if len(context.args) > FIXED_PARAM_COUNT:
+            text = "Please don't add anyting to the command\n" + usageMessage
+        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+        return False
+    
+    if len(solvedProblems) == 0:
+        text = "No solved problems to show"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+        return True
+
+    for problem in solvedProblems:
+        fixDate = problem.get_date_solved()
+        if fixDate != date.today():
+            text = "{0}\nID {1}: {2} [closed on {3}]".format(text, problem.id, problem.description, fixDate)
+        else:
+            text = "{0}\nID {1}: {2} [closed today]".format(text, problem.id, problem.description, fixDate)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+    return True
+
+
 def unknown(update, context):
     responses = ["הפקודה לא נתמכת.", "די.", "נו חלאס!"]
     if not hasattr(unknown, "counter"):
@@ -229,6 +286,7 @@ def main():
     problems_handler = CommandHandler('problems', problems)
     report_handler = CommandHandler('report', report)
     solve_handler = CommandHandler('solve', solve)
+    solved_handler = CommandHandler('solved', solved)
     unknown_handler = MessageHandler(Filters.command, unknown)
     
 
@@ -236,6 +294,7 @@ def main():
     dispatcher.add_handler(problems_handler)
     dispatcher.add_handler(report_handler)
     dispatcher.add_handler(solve_handler)
+    dispatcher.add_handler(solved_handler)
 
     # Unknown command handler must be added last - commands registerd after it won't be recognized as commands
     dispatcher.add_handler(unknown_handler)
