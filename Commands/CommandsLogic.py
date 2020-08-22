@@ -100,14 +100,14 @@ class Executioner():
 
 	    :returns False when invalid parameters are supplied. True if a the solved problems list was printed successfuly
 	    """
-	    FIXED_PARAM_COUNT = 0
+	    SOLVED_PARAM_COUNT = 0
 	    usageMessage = "usage: /solved"
-	    solvedProblems = self.problemsLog.get_fixed_problems()
+	    solvedProblems = self.problemsLog.get_solved_problems()
 	    # problems descriptions are appended here later
 	    text = ""
 
-	    if len(context.args) != FIXED_PARAM_COUNT:
-	        if len(context.args) > FIXED_PARAM_COUNT:
+	    if len(context.args) != SOLVED_PARAM_COUNT:
+	        if len(context.args) > SOLVED_PARAM_COUNT:
 	            text = "Please don't add anyting to the command\n" + usageMessage
 	        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
@@ -120,11 +120,11 @@ class Executioner():
 	        return True
 
 	    for problem in solvedProblems:
-	        fixDate = problem.get_date_solved()
-	        if fixDate != date.today():
-	            text = "{0}\nID {1}: {2} [closed on {3}]".format(text, problem.id, problem.description, fixDate)
+	        solveDate = problem.get_date_solved()
+	        if solveDate != date.today():
+	            text = "{0}\nID {1}: {2} [closed on {3}]".format(text, problem.id, problem.description, solveDate)
 	        else:
-	            text = "{0}\nID {1}: {2} [closed today]".format(text, problem.id, problem.description, fixDate)
+	            text = "{0}\nID {1}: {2} [closed today]".format(text, problem.id, problem.description, solveDate)
 	    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 	    return True

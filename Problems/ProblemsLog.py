@@ -117,7 +117,7 @@ class Manager():
         
         return openProblems
         
-    def get_fixed_problems(self):
+    def get_solved_problems(self):
         """ Return a list of solved Problem instances. """
         solvedProblems = []
         
