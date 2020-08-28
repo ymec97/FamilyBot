@@ -16,6 +16,7 @@ class Executioner():
 
 	def __init__(self):
 		self.problemsLog = Problems.ProblemsLog.Manager()
+		self._unknownCounter = 0 # Used to iterate "unknown command" responses
 
 	# Command logics
 	def start(self, update, context):
@@ -132,12 +133,10 @@ class Executioner():
 
 	def unknown(self, update, context):
 	    responses = ["הפקודה לא נתמכת.", "די.", "נו חלאס!"]
-	    if not hasattr(unknown, "counter"):
-	        unknown.counter = 0
 	    
 	    # Calculate response using counter, make sure counter never gets out of scope
-	    response = responses[unknown.counter % len(responses)]
-	    unknown.counter = (unknown.counter + 1) % len(responses)    
+	    response = responses[self._unknownCounter % len(responses)]
+	    self._unknownCounter = (self._unknownCounter + 1) % len(responses)    
 
 	    context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
