@@ -12,3 +12,7 @@ conversationbot
 familybot.data
 convbot.py
 *.swp
+
+# Delpoyment stage
+log.txt
+nohup.out

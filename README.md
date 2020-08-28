@@ -27,4 +27,17 @@ solved    - View solved problems
 
 3. Replace API Token in function get_token (yep, that's ugly, working on that)
 
-4. Launch main.py and enjoy!
+
+# Deployment
+On a local system:
+
+```
+./main.py 2>log.txt
+```
+
+On a remote system:
+(This is just one way of doing this)
+
+```
+nohup ./main.py 2>log.txt &
+```
