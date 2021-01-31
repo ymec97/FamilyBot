@@ -1,5 +1,6 @@
 from datetime import date
 import Shared.Standards
+import pickle
 
 class Problem():
     """
@@ -45,6 +46,17 @@ class Manager():
     MAX_SUPPORTED_OPEN_PROBLEMS = 100
     MAX_SUPPORTED_SOLVED_ISSUES = 100
 
+    """
+    Database related consts
+    """
+    DATABASE_FOLDER_PATH = "database/"
+    PROBLEMS_FILE_NAME = "open_problems"
+    PROBLEMS_FILE_PATH = DATABASE_FOLDER_PATH + PROBLEMS_FILE_NAME
+
+    SOLVED_PROBLEMS_FILE_NAME = "solved_problems"
+    SOLVED_PROBLEMS_FILE_PATH = DATABASE_FOLDER_PATH + SOLVED_PROBLEMS_FILE_NAME
+
+
     # a dictionary of ID: Problem
     problems = {}
 
@@ -53,14 +65,31 @@ class Manager():
 
 
     def __init__(self):
-        for id in range(self.MAX_SUPPORTED_OPEN_PROBLEMS):
-            self.problems[id] = None
+        if (not self.init_problems_from_db()):
+            for id in range(self.MAX_SUPPORTED_OPEN_PROBLEMS):
+                self.problems[id] = None
+        if (not self.init_solved_problems_from_db()):
+            for id in range(self.MAX_SUPPORTED_SOLVED_ISSUES):
+                self.solvedProblems[id] = None
 
-        for id in range(self.MAX_SUPPORTED_SOLVED_ISSUES):
-            self.solvedProblems[id] = None
+    def init_problems_from_db(self):
+        try:
+            self.deserialize_problems()
+        except:
+            return False
+        
+        return True
+
+    def init_solved_problems_from_db(self):
+        try:
+            self.deserialize_solved_problems()
+        except:
+            return False
+
+        return True
 
     def _getFreeId(self):
-        # Supporting up to 100 problems
+        # Supporting up to MAX_SUPPORTED_OPEN_PROBLEMS problems
         for id in self.problems.keys():
             if not self.problems[id]:
                 return id
@@ -76,6 +105,8 @@ class Manager():
     def new_problem(self, description):
         newId = self._getFreeId()
         self.problems[newId] = Problem(newId, description)
+        self.serialize_problems()
+
         return newId
 
     def fix_problem(self, id):
@@ -97,6 +128,9 @@ class Manager():
         self.solvedProblems[id].append(self.problems[id])
         self.problems[id] = None
 
+        self.serialize_problems()
+        self.serialize_solved_problems()
+
         return True
 
     def del_problem(self, id):
@@ -104,6 +138,9 @@ class Manager():
             return False
 
         self.problems[id] = None
+
+        self.serialize_problems()
+
         return True
 
 
@@ -127,3 +164,26 @@ class Manager():
                 solvedProblems.extend(problem)
 
         return solvedProblems
+
+    """
+    Serialization
+    """
+    def serialize_problems(self):
+        with open(self.PROBLEMS_FILE_PATH, "wb") as problems_file:
+            problems_file.write(pickle.dumps(self.problems))
+
+    def serialize_solved_problems(self):
+        with open(self.SOLVED_PROBLEMS_FILE_PATH, "wb") as solved_file:
+            solved_file.write(pickle.dumps(self.solvedProblems))
+
+
+    """
+    Deserialization
+    """
+    def deserialize_problems(self):
+        with open(self.PROBLEMS_FILE_PATH, "rb") as problems_file:
+            self.problems = pickle.loads(problems_file.read())
+
+    def deserialize_solved_problems(self):
+        with open(self.SOLVED_PROBLEMS_FILE_PATH, "rb") as solved_file:
+            self.solvedProblems = pickle.loads(solved_file.read())
