@@ -16,3 +16,6 @@ convbot.py
 # Delpoyment stage
 log.txt
 nohup.out
+
+# database related files
+database/*
