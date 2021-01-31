@@ -60,7 +60,7 @@ class Manager():
             self.solvedProblems[id] = None
 
     def _getFreeId(self):
-        # Supporting up to 100 problems
+        # Supporting up to MAX_SUPPORTED_OPEN_PROBLEMS problems
         for id in self.problems.keys():
             if not self.problems[id]:
                 return id
